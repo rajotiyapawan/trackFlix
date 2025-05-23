@@ -1,0 +1,5 @@
+package com.rajotiyapawan.trackflix.network
+
+const val AuthToken =
+    "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzMjcwNWY3ZGEzY2VhYTZlZThlM2U1MWMyMGVhNzllOSIsIm5iZiI6MTc0NzcwMDI5OC4xMjEsInN1YiI6IjY4MmJjYTRhM2I0MjMyOWY5OThjMGFmZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.f5yyOquPVnffJuGWfJ99UxjU1WQpLl0v3uikyYRIIBI"
+const val TMDB_BaseUrl = "https://api.themoviedb.org/3/"
