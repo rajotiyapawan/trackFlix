@@ -1,45 +1,46 @@
 package com.rajotiyapawan.trackflix.network
 
 import com.google.gson.Gson
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.IOException
 
 object NetworkRepository {
-    private val gson = Gson()
-    private val service: GenericAPIService = NetworkModule.retrofit.create(GenericAPIService::class.java)
+    val gson = Gson()
+    val service: GenericAPIService = NetworkModule.createService(GenericAPIService::class.java)
 
-    suspend fun <T : Any> get(
-        url: String,
-        responseClass: Class<T>
+    suspend inline fun <reified T : Any> get(
+        url: String
     ): ApiResponse<T> {
         return try {
             val response = service.get(url)
-            val parsed = gson.fromJson(response, responseClass)
-            ApiResponse.Success(parsed)
+            if (response.isSuccessful) {
+                val body = response.body()?.string()
+                val parsed = gson.fromJson(body, T::class.java)
+                ApiResponse.Success(parsed)
+            } else {
+                ApiResponse.Error("Error: ${response.code()} ${response.message()}")
+            }
         } catch (e: Exception) {
             handleError(e)
         }
     }
 
-    suspend fun <T : Any> post(
-        url: String,
-        jsonBody: String,
-        responseClass: Class<T>
-    ): ApiResponse<T> {
+    suspend inline fun <reified T> post(url: String, body: Any): ApiResponse<T> {
         return try {
-            val mediaType = "application/json".toMediaType()
-            val body = jsonBody.toRequestBody(mediaType)
             val response = service.post(url, body)
-            val parsed = gson.fromJson(response, responseClass)
-            ApiResponse.Success(parsed)
+            if (response.isSuccessful) {
+                val responseBody = response.body()?.string()
+                val parsed = gson.fromJson(responseBody, T::class.java)
+                ApiResponse.Success(parsed)
+            } else {
+                ApiResponse.Error("Error: ${response.code()} ${response.message()}")
+            }
         } catch (e: Exception) {
-            handleError(e)
+            ApiResponse.Error("Exception: ${e.message}")
         }
     }
 
-    private fun <T> handleError(e: Exception): ApiResponse<T> {
+    fun <T> handleError(e: Exception): ApiResponse<T> {
         return when (e) {
             is HttpException -> ApiResponse.Error("HTTP ${e.code()}: ${e.message()}", e.code())
             is IOException -> ApiResponse.Error("Network Error: ${e.message}")
