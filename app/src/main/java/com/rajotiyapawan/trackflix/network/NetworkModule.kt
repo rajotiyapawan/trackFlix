@@ -20,6 +20,7 @@ object NetworkModule {
             return@addInterceptor chain.proceed(requestWithHeaders)
         }
         .addInterceptor(logging)
+        .addInterceptor(CurlLoggingInterceptor())
         .build()
 
     val retrofit: Retrofit = Retrofit.Builder()
