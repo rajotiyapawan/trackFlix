@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.coil.compose)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
     testImplementation(libs.junit)
