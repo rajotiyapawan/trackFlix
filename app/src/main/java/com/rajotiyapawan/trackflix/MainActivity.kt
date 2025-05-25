@@ -11,6 +11,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -21,6 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import com.rajotiyapawan.trackflix.data.local.MovieDatabase
 import com.rajotiyapawan.trackflix.data.repository.LocalMovieRepositoryImpl
 import com.rajotiyapawan.trackflix.data.repository.RemoteMovieRepositoryImpl
+import com.rajotiyapawan.trackflix.domain.model.getMovieData
 import com.rajotiyapawan.trackflix.domain.usecase.AddToFavouriteUseCase
 import com.rajotiyapawan.trackflix.domain.usecase.GetConfigDataUseCase
 import com.rajotiyapawan.trackflix.domain.usecase.GetFavoriteMoviesUseCase
@@ -33,18 +35,20 @@ import com.rajotiyapawan.trackflix.presentation.ui.HomeScreen
 import com.rajotiyapawan.trackflix.presentation.ui.MovieDetailView
 import com.rajotiyapawan.trackflix.presentation.ui.SearchScreen
 import com.rajotiyapawan.trackflix.presentation.ui.UiEvent
+import com.rajotiyapawan.trackflix.utils.isNetworkAvailable
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: FlixViewModel by viewModels {
         viewModelFactory {
+            val isNetworkAvailable = isNetworkAvailable(this@MainActivity)
             initializer {
                 val dao = MovieDatabase.getInstance(applicationContext).movieDao()
                 val repo = RemoteMovieRepositoryImpl()
                 val localRepo = LocalMovieRepositoryImpl(dao)
                 FlixViewModel(
-                    GetMoviesUseCase(repo),
-                    GetMovieDetailsUseCase(repo),
+                    GetMoviesUseCase(repo, localRepo, isNetworkAvailable),
+                    GetMovieDetailsUseCase(repo, isNetworkAvailable),
                     GetConfigDataUseCase(repo),
                     GetFavoriteMoviesUseCase(localRepo),
                     RemoveFromFavoritesUseCase(localRepo),
@@ -71,11 +75,20 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun MainViews(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
+        val context = LocalContext.current
         LaunchedEffect(Unit) {
-            viewModel.getConfigUrls()
-            viewModel.initializeSearch()
+            if (isNetworkAvailable(context)) {
+                viewModel.initializeSearch()
+            }
         }
         val navController = rememberNavController()
+        val movieIdFromDeepLink = intent?.data?.getQueryParameter("id")?.toIntOrNull()
+        LaunchedEffect(movieIdFromDeepLink) {
+            movieIdFromDeepLink?.let { id ->
+                navController.navigate("movieDetail")
+                viewModel.getMovieDetails(getMovieData().copy(id = id))
+            }
+        }
         HandleUiEvent(navController)
         NavHost(modifier = modifier, navController = navController, startDestination = "home") {
             composable(route = "home") {
