@@ -116,7 +116,7 @@ private fun LoadMovieDetails(modifier: Modifier = Modifier, movieData: MovieData
                 uiMovieData.let {
                     val sendIntent = Intent().apply {
                         action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, "Check out this movie: ${it.title}\nhttps://rajotiyapawan.com/movie/${it.id}")
+                        putExtra(Intent.EXTRA_TEXT, "Check out this movie: ${it.title}\nhttps://rajotiyapawan.com/movie?id=${it.id}")
                         type = "text/plain"
                     }
                     val shareIntent = Intent.createChooser(sendIntent, "Share Movie")

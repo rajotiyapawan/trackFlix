@@ -61,20 +61,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val movieIdFromDeepLink = intent?.data?.getQueryParameter("id")?.toIntOrNull()
         enableEdgeToEdge()
         setContent {
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 MainViews(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding), viewModel = viewModel
+                        .padding(innerPadding), viewModel = viewModel, movieIdFromDeepLink
                 )
             }
         }
     }
 
     @Composable
-    private fun MainViews(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
+    private fun MainViews(modifier: Modifier = Modifier, viewModel: FlixViewModel, movieIdFromDeepLink: Int?) {
         val context = LocalContext.current
         LaunchedEffect(Unit) {
             if (isNetworkAvailable(context)) {
@@ -82,7 +83,6 @@ class MainActivity : ComponentActivity() {
             }
         }
         val navController = rememberNavController()
-        val movieIdFromDeepLink = intent?.data?.getQueryParameter("id")?.toIntOrNull()
         LaunchedEffect(movieIdFromDeepLink) {
             movieIdFromDeepLink?.let { id ->
                 navController.navigate("movieDetail")
