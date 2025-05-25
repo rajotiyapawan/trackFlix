@@ -137,13 +137,12 @@ class FlixViewModel(
     private var _selectedMovie = MutableStateFlow<UiState<MovieData>>(UiState.Idle)
     val selectedMovie = _selectedMovie.asStateFlow()
 
-    fun getMovieDetails(id: Int?) {
-        if (id != null) {
-            loadFavoriteStatus(id)
+    fun getMovieDetails(movie: MovieData) {
+        if (movie.id != null) {
+            loadFavoriteStatus(movie.id)
         }
         viewModelScope.launch {
-            id?.let { getIsMovieBookmarkedUseCase(it) }
-            getMovieDetailsUseCase.invoke(id).collectLatest {
+            getMovieDetailsUseCase.invoke(movie = movie).collectLatest {
                 _selectedMovie.value = it
             }
         }

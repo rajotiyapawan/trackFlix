@@ -35,11 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.rajotiyapawan.trackflix.FlixViewModel
 import com.rajotiyapawan.trackflix.domain.model.DiscoverMovieList
 import com.rajotiyapawan.trackflix.domain.model.MovieData
 import com.rajotiyapawan.trackflix.domain.model.getPoster
+import com.rajotiyapawan.trackflix.utils.ImageFromUrl
 import com.rajotiyapawan.trackflix.utils.UiState
 import com.rajotiyapawan.trackflix.utils.noRippleClick
 
@@ -124,7 +124,7 @@ private fun TrendingMoviesView(modifier: Modifier = Modifier, data: DiscoverMovi
             data.results?.let {
                 items(it) { movie ->
                     MovieItem(modifier = Modifier.noRippleClick {
-                        viewModel.getMovieDetails(movie.id)
+                        viewModel.getMovieDetails(movie)
                         viewModel.sendUiEvent(UiEvent.Navigate("movieDetail"))
                     }, movie, viewModel)
                 }
@@ -154,7 +154,7 @@ private fun NowPlayingMoviesView(modifier: Modifier = Modifier, viewModel: FlixV
                         nowPlaying.results?.let {
                             items(it) { movie ->
                                 MovieItem(modifier = Modifier.noRippleClick {
-                                    viewModel.getMovieDetails(movie.id)
+                                    viewModel.getMovieDetails(movie)
                                     viewModel.sendUiEvent(UiEvent.Navigate("movieDetail"))
                                 }, movie, viewModel)
                             }
@@ -173,13 +173,12 @@ private fun MovieItem(modifier: Modifier = Modifier, movie: MovieData, viewModel
             .width(150.dp)
             .height(300.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AsyncImage(
-            model = movie.getPoster(viewModel.configData),
+        ImageFromUrl(
+            imageUrl = movie.getPoster(viewModel.configData),
             modifier = Modifier
                 .height(250.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp)),
-            contentDescription = null,
             contentScale = ContentScale.FillHeight
         )
         Text(movie.title ?: "", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)

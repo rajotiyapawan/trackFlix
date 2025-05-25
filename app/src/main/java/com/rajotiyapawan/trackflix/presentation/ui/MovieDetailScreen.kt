@@ -1,5 +1,6 @@
 package com.rajotiyapawan.trackflix.presentation.ui
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,10 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.rajotiyapawan.trackflix.FlixViewModel
 import com.rajotiyapawan.trackflix.domain.model.MovieData
 import com.rajotiyapawan.trackflix.domain.model.getPoster
+import com.rajotiyapawan.trackflix.utils.ImageFromUrl
 import com.rajotiyapawan.trackflix.utils.UiState
 import com.rajotiyapawan.trackflix.utils.noRippleClick
 
@@ -51,7 +54,11 @@ fun MovieDetailView(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
         }
     }
     when (val result = movieData) {
-        is UiState.Error -> Toast.makeText(LocalContext.current, "No details found", Toast.LENGTH_SHORT).show()
+        is UiState.Error -> {
+            Toast.makeText(LocalContext.current, "No details found", Toast.LENGTH_SHORT).show()
+            viewModel.sendUiEvent(UiEvent.BackBtnClicked)
+        }
+
         UiState.Idle -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Box(Modifier.align(Alignment.TopStart)) {
@@ -77,20 +84,21 @@ fun MovieDetailView(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
 private fun LoadMovieDetails(modifier: Modifier = Modifier, movieData: MovieData, viewModel: FlixViewModel) {
     val uiMovieData: MovieData = remember { movieData }
     val isBookmarked = viewModel.isBookmarked.collectAsState()
+    val context = LocalContext.current
     Column(
         modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
     ) {
-        Box(Modifier
-            .noRippleClick { viewModel.sendUiEvent(UiEvent.BackBtnClicked) }
-            .padding(top = 8.dp, end = 8.dp)) {
+        Box(
+            Modifier
+                .noRippleClick { viewModel.sendUiEvent(UiEvent.BackBtnClicked) }
+                .padding(top = 8.dp, end = 8.dp)) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
         }
         Spacer(Modifier.height(12.dp))
-        AsyncImage(
-            model = uiMovieData.getPoster(viewModel.configData, index = 3),
-            contentDescription = null,
+        ImageFromUrl(
+            imageUrl = uiMovieData.getPoster(viewModel.configData, index = 3),
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp)),
@@ -102,6 +110,20 @@ private fun LoadMovieDetails(modifier: Modifier = Modifier, movieData: MovieData
             Spacer(Modifier.width(16.dp))
             Box(Modifier.noRippleClick { viewModel.toggleFavourite(uiMovieData) }) {
                 Icon(if (isBookmarked.value) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = null)
+            }
+            Spacer(Modifier.width(16.dp))
+            IconButton(onClick = {
+                uiMovieData.let {
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, "Check out this movie: ${it.title}\nhttps://rajotiyapawan.com/movie/${it.id}")
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, "Share Movie")
+                    context.startActivity(shareIntent)
+                }
+            }) {
+                Icon(Icons.Default.Share, contentDescription = "Share")
             }
         }
         Spacer(Modifier.height(8.dp))

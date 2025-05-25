@@ -8,8 +8,8 @@ import com.rajotiyapawan.trackflix.utils.UiState
 import kotlinx.coroutines.flow.Flow
 
 interface RemoteMovieRepository {
-    suspend fun getMoviesByCategory(category: MovieCategory): Flow<UiState<DiscoverMovieList>>
-    suspend fun getMovieDetails(id: Int?): Flow<UiState<MovieData>>
+    suspend fun getMoviesByCategory(category: MovieCategory): UiState<DiscoverMovieList>
+    suspend fun getMovieDetails(id: Int?): UiState<MovieData>
     suspend fun searchMovie(query: String): Flow<UiState<DiscoverMovieList>>
     suspend fun getConfigData(): Flow<UiState<ConfigData>>
 }

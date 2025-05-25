@@ -18,29 +18,29 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 class RemoteMovieRepositoryImpl : RemoteMovieRepository {
-    override suspend fun getMoviesByCategory(category: MovieCategory): Flow<UiState<DiscoverMovieList>> = flow {
-        emit(UiState.Loading)
+    override suspend fun getMoviesByCategory(category: MovieCategory): UiState<DiscoverMovieList> = try {
         val url = TMDB_BaseUrl + getUrlPath(category)
         when (val response = NetworkRepository.get<DiscoverMovieList>(url)) {
-            is ApiResponse.Error -> emit(UiState.Error(message = response.message, code = response.code))
+            is ApiResponse.Error -> UiState.Error(message = response.message, code = response.code)
             is ApiResponse.Success<DiscoverMovieList> -> {
-                val result = response.data
-                emit(UiState.Success(result))
+                UiState.Success(response.data)
             }
         }
+    } catch (e: Exception) {
+        UiState.Error(e.localizedMessage ?: "Unknown error")
     }
 
-    override suspend fun getMovieDetails(id: Int?): Flow<UiState<MovieData>> = flow {
-        emit(UiState.Loading)
+    override suspend fun getMovieDetails(id: Int?): UiState<MovieData> = try {
         var url = TMDB_BaseUrl + movieDetailsUrl
         url = url.replace("<id>", id.toString())
         when (val response = NetworkRepository.get<MovieData>(url)) {
-            is ApiResponse.Error -> emit(UiState.Error(message = response.message, code = response.code))
+            is ApiResponse.Error -> UiState.Error(message = response.message, code = response.code)
             is ApiResponse.Success<MovieData> -> {
-                val result = response.data
-                emit(UiState.Success(result))
+                UiState.Success(response.data)
             }
         }
+    } catch (e: Exception) {
+        UiState.Error(e.localizedMessage ?: "Unknown error")
     }
 
     override suspend fun searchMovie(query: String): Flow<UiState<DiscoverMovieList>> = flow {

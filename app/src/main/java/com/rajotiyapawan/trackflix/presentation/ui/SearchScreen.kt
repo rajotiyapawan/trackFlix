@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,16 +22,20 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.rajotiyapawan.trackflix.FlixViewModel
 import com.rajotiyapawan.trackflix.domain.model.getPoster
+import com.rajotiyapawan.trackflix.utils.isNetworkAvailable
 import com.rajotiyapawan.trackflix.utils.noRippleClick
 
 @Composable
@@ -57,25 +62,30 @@ fun SearchScreen(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(results) { result ->
-                Row(Modifier.noRippleClick {
-                    viewModel.getMovieDetails(result.id)
-                    viewModel.sendUiEvent(UiEvent.Navigate("movieDetail"))
-                }) {
-                    AsyncImage(
-                        model = result.getPoster(viewModel.configData), contentDescription = null, modifier = Modifier
-                            .height(90.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    )
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        Text("${result.title ?: ""} (${result.release_date})", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                        Text(result.overview ?: "", maxLines = 3, overflow = TextOverflow.Ellipsis)
+        if (isNetworkAvailable(LocalContext.current)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(results) { result ->
+                    Row(Modifier.noRippleClick {
+                        viewModel.getMovieDetails(result)
+                        viewModel.sendUiEvent(UiEvent.Navigate("movieDetail"))
+                    }) {
+                        AsyncImage(
+                            model = result.getPoster(viewModel.configData), contentDescription = null, modifier = Modifier
+                                .height(90.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Text("${result.title ?: ""} (${result.release_date})", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            Text(result.overview ?: "", maxLines = 3, overflow = TextOverflow.Ellipsis)
+                        }
                     }
+                    Spacer(Modifier.height(4.dp))
+                    HorizontalDivider(Modifier.fillMaxWidth(), color = Color.Gray)
                 }
-                Spacer(Modifier.height(4.dp))
-                HorizontalDivider(Modifier.fillMaxWidth(), color = Color.Gray)
+            }
+        } else {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("You are offline", fontSize = 24.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
         }
     }

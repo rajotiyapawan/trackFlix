@@ -31,9 +31,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.rajotiyapawan.trackflix.FlixViewModel
 import com.rajotiyapawan.trackflix.domain.model.getPoster
+import com.rajotiyapawan.trackflix.utils.ImageFromUrl
 import com.rajotiyapawan.trackflix.utils.noRippleClick
 
 @Composable
@@ -66,17 +66,17 @@ fun FavouritesScreen(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
                 items(list.value) { movie ->
                     Row(
                         Modifier
+                            .fillMaxWidth()
                             .height(IntrinsicSize.Min)
                             .noRippleClick {
-                                viewModel.getMovieDetails(movie.id)
+                                viewModel.getMovieDetails(movie)
                                 viewModel.sendUiEvent(UiEvent.Navigate("movieDetail"))
                             }) {
-                        AsyncImage(
-                            model = movie.getPoster(viewModel.configData),
+                        ImageFromUrl(
+                            imageUrl = movie.getPoster(viewModel.configData),
                             modifier = Modifier
                                 .height(250.dp)
                                 .clip(RoundedCornerShape(12.dp)),
-                            contentDescription = null,
                             contentScale = ContentScale.FillHeight
                         )
                         Spacer(Modifier.width(8.dp))
