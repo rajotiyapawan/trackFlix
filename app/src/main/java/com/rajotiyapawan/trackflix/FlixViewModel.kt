@@ -2,10 +2,22 @@ package com.rajotiyapawan.trackflix
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rajotiyapawan.trackflix.domain.model.ConfigData
+import com.rajotiyapawan.trackflix.domain.model.DiscoverMovieList
+import com.rajotiyapawan.trackflix.domain.model.MovieCategory
+import com.rajotiyapawan.trackflix.domain.model.MovieData
+import com.rajotiyapawan.trackflix.domain.usecase.AddToFavouriteUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetConfigDataUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetFavoriteMoviesUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetIsMovieBookmarkedUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetMovieDetailsUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetMoviesUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.RemoveFromFavoritesUseCase
 import com.rajotiyapawan.trackflix.network.ApiResponse
 import com.rajotiyapawan.trackflix.network.NetworkRepository
 import com.rajotiyapawan.trackflix.network.TMDB_BaseUrl
-import com.rajotiyapawan.trackflix.ui.UiEvent
+import com.rajotiyapawan.trackflix.presentation.ui.UiEvent
+import com.rajotiyapawan.trackflix.utils.UiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,7 +29,15 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-class FlixViewModel : ViewModel() {
+class FlixViewModel(
+    private val getMoviesUseCase: GetMoviesUseCase,
+    private val getMovieDetailsUseCase: GetMovieDetailsUseCase,
+    private val getConfigDataUseCase: GetConfigDataUseCase,
+    private val getFavoriteMoviesUseCase: GetFavoriteMoviesUseCase,
+    private val removeFromFavoritesUseCase: RemoveFromFavoritesUseCase,
+    private val addToFavouriteUseCase: AddToFavouriteUseCase,
+    private val getIsMovieBookmarkedUseCase: GetIsMovieBookmarkedUseCase
+) : ViewModel() {
 
     private var _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent get() = _uiEvent
@@ -34,50 +54,41 @@ class FlixViewModel : ViewModel() {
         }
     }
 
-    private var _posterPath = ""
-    val posterPath get() = _posterPath
+    init {
+        getConfigUrls()
+    }
 
     private var _configData: ConfigData? = null
     val configData get() = _configData
     fun getConfigUrls() {
         viewModelScope.launch {
-            when (val response = NetworkRepository.get<ConfigData>("${TMDB_BaseUrl}configuration")) {
-                is ApiResponse.Error -> {}
-                ApiResponse.Idle -> {}
-                is ApiResponse.Success<ConfigData> -> {
-                    _configData = response.data
-                    _posterPath = response.data.images.secure_base_url + response.data.images.poster_sizes[1]
+            getConfigDataUseCase().collectLatest {
+                when (it) {
+                    is UiState.Success<ConfigData> -> _configData = it.data
+                    else -> {}
                 }
             }
         }
     }
 
-    private var _trendingMovies = MutableStateFlow<DiscoverMovieList?>(null)
+    private var _trendingMovies = MutableStateFlow<UiState<DiscoverMovieList>>(UiState.Idle)
     val trendingMovies = _trendingMovies.asStateFlow()
 
-    fun loadData() {
+    fun getTrendingMovies() {
         viewModelScope.launch {
-            when (val response = NetworkRepository.get<DiscoverMovieList>("${TMDB_BaseUrl}trending/movie/day?language=en-US")) {
-                is ApiResponse.Error -> {}
-                ApiResponse.Idle -> {}
-                is ApiResponse.Success<DiscoverMovieList> -> {
-                    _trendingMovies.value = response.data
-                }
+            getMoviesUseCase.invoke(MovieCategory.TRENDING).collectLatest {
+                _trendingMovies.value = it
             }
         }
     }
 
-    private var _nowPlayingMovies = MutableStateFlow<DiscoverMovieList?>(null)
+    private var _nowPlayingMovies = MutableStateFlow<UiState<DiscoverMovieList>>(UiState.Idle)
     val nowPlayingMovies = _nowPlayingMovies.asStateFlow()
 
     fun loadNowPlayingData() {
         viewModelScope.launch {
-            when (val response = NetworkRepository.get<DiscoverMovieList>("${TMDB_BaseUrl}movie/now_playing?language=en-US&page=1")) {
-                is ApiResponse.Error -> {}
-                ApiResponse.Idle -> {}
-                is ApiResponse.Success<DiscoverMovieList> -> {
-                    _nowPlayingMovies.value = response.data
-                }
+            getMoviesUseCase.invoke(MovieCategory.NOW_PLAYING).collectLatest {
+                _nowPlayingMovies.value = it
             }
         }
     }
@@ -123,31 +134,54 @@ class FlixViewModel : ViewModel() {
         _query.value = newQuery
     }
 
-    private var _selectedMovie = MutableStateFlow<MovieData?>(null)
+    private var _selectedMovie = MutableStateFlow<UiState<MovieData>>(UiState.Idle)
     val selectedMovie = _selectedMovie.asStateFlow()
 
     fun getMovieDetails(id: Int?) {
+        if (id != null) {
+            loadFavoriteStatus(id)
+        }
         viewModelScope.launch {
-            when (val response = NetworkRepository.get<MovieData>("${TMDB_BaseUrl}movie/${id}?language=en-US")) {
-                is ApiResponse.Error -> {}
-                ApiResponse.Idle -> {}
-                is ApiResponse.Success<MovieData> -> {
-                    _selectedMovie.value = response.data
-                }
+            id?.let { getIsMovieBookmarkedUseCase(it) }
+            getMovieDetailsUseCase.invoke(id).collectLatest {
+                _selectedMovie.value = it
+            }
+        }
+    }
+
+    private val _isBookmarked = MutableStateFlow(false)
+    val isBookmarked: StateFlow<Boolean> = _isBookmarked
+
+    private fun loadFavoriteStatus(movieId: Int) {
+        viewModelScope.launch {
+            getIsMovieBookmarkedUseCase(movieId).collect {
+                _isBookmarked.value = it
             }
         }
     }
 
     fun clearMovieDetails() {
-        _selectedMovie.value = null
+        _selectedMovie.value = UiState.Idle
     }
 
     private var _favouritesList = MutableStateFlow<List<MovieData>>(emptyList())
     val favouritesList = _favouritesList.asStateFlow()
     fun getFavourites() {
         viewModelScope.launch {
-            _favouritesList.value = trendingMovies.value?.results ?: emptyList()
+            getFavoriteMoviesUseCase().collectLatest {
+                _favouritesList.value = it
+            }
         }
     }
 
+    fun toggleFavourite(movie: MovieData) {
+        viewModelScope.launch {
+            if (isBookmarked.value) {
+                removeFromFavoritesUseCase(movie)
+            } else {
+                addToFavouriteUseCase(movie)
+            }
+            _isBookmarked.value = !isBookmarked.value
+        }
+    }
 }

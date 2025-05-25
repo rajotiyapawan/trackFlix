@@ -1,4 +1,4 @@
-package com.rajotiyapawan.trackflix
+package com.rajotiyapawan.trackflix.domain.model
 
 data class ConfigData(
     val change_keys: List<String>,

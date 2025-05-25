@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -11,36 +12,65 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.rajotiyapawan.trackflix.ui.FavouritesScreen
-import com.rajotiyapawan.trackflix.ui.HomeScreen
-import com.rajotiyapawan.trackflix.ui.MovieDetailView
-import com.rajotiyapawan.trackflix.ui.SearchScreen
-import com.rajotiyapawan.trackflix.ui.UiEvent
-import com.rajotiyapawan.trackflix.ui.theme.TrackFlixTheme
+import com.rajotiyapawan.trackflix.data.local.MovieDatabase
+import com.rajotiyapawan.trackflix.data.repository.LocalMovieRepositoryImpl
+import com.rajotiyapawan.trackflix.data.repository.RemoteMovieRepositoryImpl
+import com.rajotiyapawan.trackflix.domain.usecase.AddToFavouriteUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetConfigDataUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetFavoriteMoviesUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetIsMovieBookmarkedUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetMovieDetailsUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.GetMoviesUseCase
+import com.rajotiyapawan.trackflix.domain.usecase.RemoveFromFavoritesUseCase
+import com.rajotiyapawan.trackflix.presentation.ui.FavouritesScreen
+import com.rajotiyapawan.trackflix.presentation.ui.HomeScreen
+import com.rajotiyapawan.trackflix.presentation.ui.MovieDetailView
+import com.rajotiyapawan.trackflix.presentation.ui.SearchScreen
+import com.rajotiyapawan.trackflix.presentation.ui.UiEvent
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: FlixViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val dao = MovieDatabase.getInstance(applicationContext).movieDao()
+                val repo = RemoteMovieRepositoryImpl()
+                val localRepo = LocalMovieRepositoryImpl(dao)
+                FlixViewModel(
+                    GetMoviesUseCase(repo),
+                    GetMovieDetailsUseCase(repo),
+                    GetConfigDataUseCase(repo),
+                    GetFavoriteMoviesUseCase(localRepo),
+                    RemoveFromFavoritesUseCase(localRepo),
+                    AddToFavouriteUseCase(localRepo),
+                    GetIsMovieBookmarkedUseCase(localRepo)
+                )
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TrackFlixTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainViews(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                    )
-                }
+            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                MainViews(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding), viewModel = viewModel
+                )
             }
         }
     }
 
     @Composable
-    fun MainViews(modifier: Modifier = Modifier, viewModel: FlixViewModel = viewModel()) {
+    private fun MainViews(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
         LaunchedEffect(Unit) {
             viewModel.getConfigUrls()
             viewModel.initializeSearch()
@@ -77,6 +107,9 @@ class MainActivity : ComponentActivity() {
                     }
 
                     UiEvent.DoNothing -> Unit
+                    UiEvent.BackBtnClicked -> {
+                        navController.popBackStack()
+                    }
                 }
             }
         }
