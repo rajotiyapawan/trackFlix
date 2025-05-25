@@ -45,8 +45,8 @@ fun ImageFromUrl(modifier: Modifier = Modifier, imageUrl: String, contentScale: 
             model = ImageRequest.Builder(context)
                 .data(imageUrl) // Your full TMDB image URL
                 .crossfade(true)
-                .placeholder(R.drawable.movie_placeholder100) // Placeholder drawable
-                .error(R.drawable.movie_placeholder100)       // Show this if loading fails
+                .placeholder(R.mipmap.ic_placeholder_foreground) // Placeholder drawable
+                .error(R.mipmap.ic_placeholder_foreground)       // Show this if loading fails
                 .build(),
             contentDescription = null,
             contentScale = contentScale,
@@ -58,7 +58,7 @@ fun ImageFromUrl(modifier: Modifier = Modifier, imageUrl: String, contentScale: 
         )
     } else {
         Image(
-            painter = painterResource(id = R.drawable.movie_placeholder100),
+            painter = painterResource(id = R.mipmap.ic_placeholder_foreground),
             contentDescription = null,
             modifier = modifier,
             contentScale = contentScale
