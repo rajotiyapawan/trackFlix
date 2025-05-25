@@ -29,10 +29,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rajotiyapawan.trackflix.FlixViewModel
@@ -58,6 +60,16 @@ fun HomeScreen(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
         is UiState.Error -> {
             Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
             Log.d("Error", result.message)
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("No Data to Show.", fontSize = 24.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Text("Try Again", fontSize = 24.sp, color = Color.Gray, textAlign = TextAlign.Center, textDecoration = TextDecoration.Underline, modifier = Modifier.noRippleClick {
+                        viewModel.getTrendingMovies()
+                        viewModel.loadNowPlayingData()
+                    })
+
+                }
+            }
         }
 
         UiState.Idle -> {}
