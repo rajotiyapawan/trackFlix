@@ -44,10 +44,15 @@ import com.rajotiyapawan.trackflix.domain.model.getPoster
 import com.rajotiyapawan.trackflix.utils.ImageFromUrl
 import com.rajotiyapawan.trackflix.utils.UiState
 import com.rajotiyapawan.trackflix.utils.noRippleClick
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
     LaunchedEffect(Unit) {
+        if (viewModel.configData == null) {
+            viewModel.getConfigUrls()
+            delay(200)
+        }
         viewModel.getTrendingMovies()
         viewModel.loadNowPlayingData()
         viewModel.onQueryChanged("")

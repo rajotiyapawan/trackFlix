@@ -1,6 +1,8 @@
 package com.rajotiyapawan.trackflix
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -38,7 +40,6 @@ import com.rajotiyapawan.trackflix.presentation.ui.UiEvent
 import com.rajotiyapawan.trackflix.utils.isNetworkAvailable
 
 class MainActivity : ComponentActivity() {
-
     private val viewModel: FlixViewModel by viewModels {
         viewModelFactory {
             val isNetworkAvailable = isNetworkAvailable(this@MainActivity)
@@ -59,23 +60,35 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.data?.let { uri ->
+            // Re-handle deep link here
+            val movieIdFromDeepLink = uri.getQueryParameter("id")?.toIntOrNull()
+            movieIdFromDeepLink?.let { id ->
+                viewModel.sendUiEvent(UiEvent.Navigate("movieDetail"))
+                viewModel.getMovieDetails(getMovieData().copy(id = id))
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val movieIdFromDeepLink = intent?.data?.getQueryParameter("id")?.toIntOrNull()
+        viewModel.getConfigUrls()
         enableEdgeToEdge()
         setContent {
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 MainViews(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding), viewModel = viewModel, movieIdFromDeepLink
+                        .padding(innerPadding), viewModel = viewModel
                 )
             }
         }
     }
 
     @Composable
-    private fun MainViews(modifier: Modifier = Modifier, viewModel: FlixViewModel, movieIdFromDeepLink: Int?) {
+    private fun MainViews(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
         val context = LocalContext.current
         LaunchedEffect(Unit) {
             if (isNetworkAvailable(context)) {
@@ -83,10 +96,14 @@ class MainActivity : ComponentActivity() {
             }
         }
         val navController = rememberNavController()
-        LaunchedEffect(movieIdFromDeepLink) {
+
+        intent.data?.let { uri ->
+            // Re-handle deep link here for app not already open
+            val movieIdFromDeepLink = uri.getQueryParameter("id")?.toIntOrNull()
             movieIdFromDeepLink?.let { id ->
-                navController.navigate("movieDetail")
+                Log.d("Deeplink", id.toString())
                 viewModel.getMovieDetails(getMovieData().copy(id = id))
+                viewModel.sendUiEvent(UiEvent.Navigate("movieDetail"), withDelay = true)
             }
         }
         HandleUiEvent(navController)

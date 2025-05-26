@@ -55,7 +55,7 @@ fun MovieDetailView(modifier: Modifier = Modifier, viewModel: FlixViewModel) {
     }
     when (val result = movieData) {
         is UiState.Error -> {
-            Toast.makeText(LocalContext.current, "No details found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(LocalContext.current, result.message, Toast.LENGTH_SHORT).show()
             viewModel.sendUiEvent(UiEvent.BackBtnClicked)
         }
 

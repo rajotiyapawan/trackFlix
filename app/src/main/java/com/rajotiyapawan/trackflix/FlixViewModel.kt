@@ -20,6 +20,7 @@ import com.rajotiyapawan.trackflix.presentation.ui.UiEvent
 import com.rajotiyapawan.trackflix.utils.UiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,8 +43,11 @@ class FlixViewModel(
     private var _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent get() = _uiEvent
 
-    fun sendUiEvent(event: UiEvent) {
+    fun sendUiEvent(event: UiEvent, withDelay: Boolean = false) {
         viewModelScope.launch {
+            if (withDelay) {
+                delay(1000)
+            }
             _uiEvent.emit(event)
         }
     }
@@ -52,10 +56,6 @@ class FlixViewModel(
         viewModelScope.launch {
             _uiEvent.emit(UiEvent.DoNothing)
         }
-    }
-
-    init {
-        getConfigUrls()
     }
 
     private var _configData: ConfigData? = null

@@ -27,7 +27,11 @@ class GetMovieDetailsUseCase(
                 else -> {}
             }
         } else {
-            emit(UiState.Success(movie))
+            if (movie.title == null && movie.overview == null) {
+                emit(UiState.Error("You are not connected to Internet. No Details Found."))
+            } else {
+                emit(UiState.Success(movie))
+            }
         }
     }.flowOn(Dispatchers.IO)
 }
