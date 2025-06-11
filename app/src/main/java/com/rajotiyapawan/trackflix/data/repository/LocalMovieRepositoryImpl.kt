@@ -1,11 +1,12 @@
 package com.rajotiyapawan.trackflix.data.repository
 
+import com.rajotiyapawan.trackflix.data.local.MovieCategoryCrossRef
 import com.rajotiyapawan.trackflix.data.local.MovieDao
 import com.rajotiyapawan.trackflix.data.mapper.toDomain
 import com.rajotiyapawan.trackflix.data.mapper.toEntity
 import com.rajotiyapawan.trackflix.data.mapper.toNowPlayingEntity
-import com.rajotiyapawan.trackflix.data.mapper.toTrendingEntity
 import com.rajotiyapawan.trackflix.domain.model.ConfigData
+import com.rajotiyapawan.trackflix.domain.model.MovieCategory
 import com.rajotiyapawan.trackflix.domain.model.MovieData
 import com.rajotiyapawan.trackflix.domain.repository.LocalMovieRepository
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +31,18 @@ class LocalMovieRepositoryImpl(private val movieDao: MovieDao) : LocalMovieRepos
     }
 
     override suspend fun insertTrendingMovies(movies: List<MovieData>) {
-        movieDao.insertAllTrending(movies.map { it.toTrendingEntity() })
+        val movieEntities = movies.map { it.toEntity() }
+        // Replace existing entries for this category
+        movieDao.clearCategory(MovieCategory.TRENDING.name)
+        val crossRefs = movies.mapIndexed { index, movie ->
+            MovieCategoryCrossRef(
+                movieId = movie.id ?: 0,
+                category = MovieCategory.TRENDING.name,
+                position = index
+            )
+        }
+        movieDao.insertMovies(movieEntities)
+        movieDao.insertCategoryRefs(crossRefs)
     }
 
     override fun getTrendingMovies(): Flow<List<MovieData>> {
