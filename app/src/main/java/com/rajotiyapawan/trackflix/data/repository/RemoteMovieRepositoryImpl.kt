@@ -71,6 +71,7 @@ class RemoteMovieRepositoryImpl : RemoteMovieRepository {
         return when (category) {
             MovieCategory.TRENDING -> trendingMoviesUrl
             MovieCategory.NOW_PLAYING -> nowPlayingMoviesUrl
+            MovieCategory.FAVOURITE -> "" // only for local use
         }
     }
 }

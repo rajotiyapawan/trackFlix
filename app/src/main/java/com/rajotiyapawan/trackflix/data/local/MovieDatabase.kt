@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [MovieEntity::class, TrendingMovieEntity::class, NowPlayingMovieEntity::class],
+    entities = [MovieEntity::class, MovieCategoryCrossRef::class],
     version = 1,
     exportSchema = false
 )

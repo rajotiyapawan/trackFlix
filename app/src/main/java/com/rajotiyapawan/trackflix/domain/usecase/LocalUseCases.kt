@@ -1,5 +1,6 @@
 package com.rajotiyapawan.trackflix.domain.usecase
 
+import com.rajotiyapawan.trackflix.domain.model.MovieCategory
 import com.rajotiyapawan.trackflix.domain.model.MovieData
 import com.rajotiyapawan.trackflix.domain.repository.LocalMovieRepository
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +14,7 @@ class RemoveFromFavoritesUseCase(private val repo: LocalMovieRepository) {
 }
 
 class GetFavoriteMoviesUseCase(private val repo: LocalMovieRepository) {
-    suspend operator fun invoke(): Flow<List<MovieData>> = repo.getAllFavourites()
+    suspend operator fun invoke(): Flow<List<MovieData>> = repo.getMoviesByCategory(MovieCategory.FAVOURITE)
 }
 
 class GetIsMovieBookmarkedUseCase(private val repo: LocalMovieRepository) {

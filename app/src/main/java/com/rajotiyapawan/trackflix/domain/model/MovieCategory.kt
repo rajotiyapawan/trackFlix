@@ -2,5 +2,6 @@ package com.rajotiyapawan.trackflix.domain.model
 
 enum class MovieCategory {
     TRENDING,
-    NOW_PLAYING
+    NOW_PLAYING,
+    FAVOURITE
 }

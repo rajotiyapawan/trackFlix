@@ -21,7 +21,7 @@ class GetMoviesUseCase(
             when (val result = repository.getMoviesByCategory(category)) {
                 is UiState.Success -> {
                     result.data.results?.let {
-                        localMovieRepository.insertTrendingMovies(it)
+                        localMovieRepository.insertMoviesByCategory(category = category, it)
                     }
                     emit(UiState.Success(result.data))
                 }
@@ -33,7 +33,7 @@ class GetMoviesUseCase(
                 else -> {}
             }
         } else {
-            localMovieRepository.getTrendingMovies().collect {
+            localMovieRepository.getMoviesByCategory(category).collect {
                 if (it.isEmpty()) {
                     emit(UiState.Error("No internet and no cached data"))
                 } else {
